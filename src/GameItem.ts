@@ -5,31 +5,39 @@ export default abstract class GameItem {
 
   protected image: HTMLImageElement;
 
-  /**
-   * Getter for Y Position.
-   *
-   * @returns the Y Position of the GameItem.
-   */
-  public getYpos(): number {
+  public constructor(xPos: number, yPos: number, img: HTMLImageElement) {
+    this.xPosition = xPos;
+    this.yPosition = yPos;
+    this.image = img;
+  }
+
+  public getXPosition(): number {
+    return this.xPosition;
+  }
+
+  public setXPosition(xPos: number): void {
+    this.xPosition = xPos;
+  }
+
+  public getYPosition(): number {
     return this.yPosition;
   }
 
-  /**
-   * Draws the GameItems.
-   *
-   * @param ctx Canvas Rendering Context 2D
-   */
-  public draw(ctx: CanvasRenderingContext2D) {
-    this.ctx.drawImage(this.bird.image, this.bird.xPos, this.bird.yPos);
+  public setYPosition(yPos: number): void {
+    this.yPosition = yPos;
   }
 
-  /**
-   * Moves the GameItems
-   */
-  public move() {
-    this.bird.yPos += this.bird.ySpeed;
-    this.blocks.forEach((block) => {
-      block.xPos -= block.xSpeed;
-    });
+  public getImage(): HTMLImageElement {
+    return this.image;
   }
+
+  public setImage(img: HTMLImageElement): void {
+    this.image = img;
+  }
+
+  public draw(ctx: CanvasRenderingContext2D) {
+    ctx.drawImage(this.image, this.xPosition, this.yPosition);
+  }
+
+  public abstract move(): void;
 }

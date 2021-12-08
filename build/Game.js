@@ -1,4 +1,5 @@
-import KeyboardListener from './KeyboardListener.js';
+import Bird from './Bird.js';
+import Block from './Block.js';
 export default class Game {
     blocks;
     bird;
@@ -6,7 +7,6 @@ export default class Game {
     blockSpeed = 5;
     canvas;
     ctx;
-    keyBoardListener;
     constructor(canvasId) {
         this.canvas = canvasId;
         this.canvas.width = window.innerWidth;
@@ -14,7 +14,6 @@ export default class Game {
         this.ctx = this.canvas.getContext('2d');
         this.blocks = [];
         this.score = 0;
-        this.keyBoardListener = new KeyboardListener();
         this.bird = this.insertHzBird();
         console.log(this.bird);
         this.loop();
@@ -24,11 +23,11 @@ export default class Game {
         this.insertExtraBlock();
         this.increaseBlockSpeed();
         this.blockOutOfCanvas();
-        this.handleKeyBoard();
+        this.bird.handleKeyBoard();
         this.move();
         this.draw();
-        const collidesWithBlock = this.hzCollidesWithBlock();
-        const collidesWithSide = this.hzCollidesWithSide();
+        const collidesWithBlock = this.bird.collidesWithBlocks(this.blocks);
+        const collidesWithSide = this.bird.collidesWithCanvas(this.canvas);
         if (collidesWithBlock || collidesWithSide) {
             this.drawGameOver();
         }
@@ -39,7 +38,7 @@ export default class Game {
     };
     increaseGravity() {
         if (this.score % 8 === 0) {
-            this.bird.ySpeed += 1;
+            this.bird.setYSpeed(1);
         }
     }
     insertExtraBlock() {
@@ -49,41 +48,22 @@ export default class Game {
     }
     createBlock() {
         const image = Game.loadNewImage('./assets/block.png');
-        let yPos;
-        const randomNumber = Game.randomNumber(0, 1);
-        if (randomNumber === 0) {
-            yPos = 0;
-        }
-        else {
-            yPos = this.canvas.height - image.height;
-        }
-        return {
-            xPos: this.canvas.width,
-            yPos: yPos,
-            xSpeed: this.blockSpeed,
-            image: image,
-        };
+        return new Block(this.canvas.width, 0, this.blockSpeed, image, this.canvas);
     }
     increaseBlockSpeed() {
         if (this.score % 400 === 0) {
-            this.blockSpeed += 50;
+            this.blockSpeed += 2;
             this.blocks.forEach((block) => {
-                block.xSpeed = this.blockSpeed;
+                block.setXSpeed(this.blockSpeed);
             });
         }
     }
     blockOutOfCanvas() {
         this.blocks.forEach((block, index) => {
-            if (block.xPos + block.image.width < 0) {
+            if (block.getXPosition() + block.getImage().width < 0) {
                 this.blocks.splice(index, 1);
             }
         });
-    }
-    handleKeyBoard() {
-        if (this.keyBoardListener.isKeyDown(KeyboardListener.KEY_UP)) {
-            this.bird.yPos -= 12;
-            this.bird.ySpeed = 1;
-        }
     }
     drawGameOver() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -91,54 +71,26 @@ export default class Game {
     }
     insertHzBird() {
         const image = Game.loadNewImage('./assets/logo.png');
-        return {
-            xPos: 100,
-            yPos: this.canvas.height / 2,
-            ySpeed: 1,
-            image: image,
-        };
-    }
-    hzCollidesWithBlock() {
-        let collides = false;
-        this.blocks.forEach((block) => {
-            if (this.bird.xPos < block.xPos + block.image.width &&
-                this.bird.xPos + this.bird.image.width > block.xPos &&
-                this.bird.yPos < block.yPos + block.image.height &&
-                this.bird.yPos + this.bird.image.height > block.yPos) {
-                console.log('Collision with block!');
-                collides = true;
-            }
-        });
-        return collides;
-    }
-    hzCollidesWithSide() {
-        if (this.bird.yPos < 0 || this.bird.yPos + this.bird.image.height > this.canvas.height) {
-            console.log('Collision with side!');
-            return true;
-        }
-        return false;
+        return new Bird(100, this.canvas.height / 2, image);
     }
     move() {
-        this.bird.yPos += this.bird.ySpeed;
+        this.bird.move();
         this.blocks.forEach((block) => {
-            block.xPos -= block.xSpeed;
+            block.move();
         });
     }
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.drawHZBird();
+        this.bird.draw(this.ctx);
         this.drawBlocks();
         this.writeTextToCanvas(`Score is: ${this.score}`, 40, this.canvas.width / 2, 40);
     }
-    drawHZBird() {
-        this.ctx.drawImage(this.bird.image, this.bird.xPos, this.bird.yPos);
-    }
     drawBlocks() {
         this.blocks.forEach((block) => {
-            this.ctx.drawImage(block.image, block.xPos, block.yPos);
+            block.draw(this.ctx);
         });
     }
-    writeTextToCanvas(text, fontSize = 20, xCoordinate, yCoordinate, alignment = 'center', color = 'white') {
+    writeTextToCanvas(text, fontSize = 20, xCoordinate, yCoordinate, alignment = 'center', color = 'red') {
         this.ctx.font = `${fontSize}px sans-serif`;
         this.ctx.fillStyle = color;
         this.ctx.textAlign = alignment;

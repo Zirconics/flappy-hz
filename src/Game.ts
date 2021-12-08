@@ -1,10 +1,11 @@
-import KeyboardListener from './KeyboardListener.js';
+import Bird from './Bird.js';
+import Block from './Block.js';
 
 export default class Game {
   // Properties for game elements
-  private blocks: any[];
+  private blocks: Block[];
 
-  private bird: any;
+  private bird: Bird;
 
   private score: number;
 
@@ -15,8 +16,6 @@ export default class Game {
   private canvas: HTMLCanvasElement;
 
   private ctx: CanvasRenderingContext2D;
-
-  private keyBoardListener: KeyboardListener;
 
   /**
    * Initialize the Game
@@ -32,8 +31,6 @@ export default class Game {
     this.blocks = [];
     this.score = 0;
 
-    this.keyBoardListener = new KeyboardListener();
-
     this.bird = this.insertHzBird();
     console.log(this.bird);
 
@@ -48,13 +45,13 @@ export default class Game {
     this.insertExtraBlock();
     this.increaseBlockSpeed();
     this.blockOutOfCanvas();
-    this.handleKeyBoard();
+    this.bird.handleKeyBoard();
 
     this.move();
     this.draw();
 
-    const collidesWithBlock = this.hzCollidesWithBlock();
-    const collidesWithSide = this.hzCollidesWithSide();
+    const collidesWithBlock = this.bird.collidesWithBlocks(this.blocks);
+    const collidesWithSide = this.bird.collidesWithCanvas(this.canvas);
 
     if (collidesWithBlock || collidesWithSide) {
       // The game loop ends on game over (the requestAnimationFrame is no longer called).
@@ -71,7 +68,7 @@ export default class Game {
    */
   private increaseGravity() {
     if (this.score % 8 === 0) {
-      this.bird.ySpeed += 1;
+      this.bird.setYSpeed(1);
     }
   }
 
@@ -91,23 +88,9 @@ export default class Game {
    *
    * @returns The block
    */
-  private createBlock(): any {
+  private createBlock(): Block {
     const image = Game.loadNewImage('./assets/block.png');
-    let yPos: number;
-
-    const randomNumber = Game.randomNumber(0, 1);
-    if (randomNumber === 0) {
-      yPos = 0;
-    } else {
-      yPos = this.canvas.height - image.height;
-    }
-
-    return {
-      xPos: this.canvas.width,
-      yPos: yPos,
-      xSpeed: this.blockSpeed,
-      image: image,
-    };
+    return new Block(this.canvas.width, 0, this.blockSpeed, image, this.canvas);
   }
 
   /**
@@ -115,9 +98,9 @@ export default class Game {
    */
   private increaseBlockSpeed() {
     if (this.score % 400 === 0) {
-      this.blockSpeed += 5;
+      this.blockSpeed += 2;
       this.blocks.forEach((block) => {
-        block.xSpeed = this.blockSpeed;
+        block.setXSpeed(this.blockSpeed)
       });
     }
   }
@@ -127,20 +110,10 @@ export default class Game {
    */
   private blockOutOfCanvas() {
     this.blocks.forEach((block, index) => {
-      if (block.xPos + block.image.width < 0) {
+      if (block.getXPosition() + block.getImage().width < 0) {
         this.blocks.splice(index, 1);
       }
     });
-  }
-
-  /**
-   * Handle the UP key on the keyboard to give the player the ability to move the HZ bird up
-   */
-  private handleKeyBoard() {
-    if (this.keyBoardListener.isKeyDown(KeyboardListener.KEY_UP)) {
-      this.bird.yPos -= 12;
-      this.bird.ySpeed = 1;
-    }
   }
 
   /**
@@ -162,60 +135,18 @@ export default class Game {
    *
    * @returns returns a HZ bird
    */
-  private insertHzBird(): any {
+  private insertHzBird(): Bird {
     const image = Game.loadNewImage('./assets/logo.png');
-    return {
-      xPos: 100,
-      yPos: this.canvas.height / 2,
-      ySpeed: 1,
-      image: image,
-    };
-  }
-
-  /**
-   * Method to determine of the HZ bird is colliding with a block
-   *
-   * @returns true or false
-   */
-  private hzCollidesWithBlock(): any {
-    let collides: boolean = false;
-    this.blocks.forEach((block) => {
-      if (
-        this.bird.xPos < block.xPos + block.image.width &&
-        this.bird.xPos + this.bird.image.width > block.xPos &&
-        this.bird.yPos < block.yPos + block.image.height &&
-        this.bird.yPos + this.bird.image.height > block.yPos
-      ) {
-        console.log('Collision with block!');
-        collides = true;
-      }
-    });
-    return collides;
-  }
-
-  /**
-   * Method to determine whether the HZ bird collides with the top or bottom of the screen
-   *
-   * @returns true or false
-   */
-  private hzCollidesWithSide(): any {
-    if (
-      this.bird.yPos < 0 || this.bird.yPos + this.bird.image.height > this.canvas.height
-    ) {
-      console.log('Collision with side!');
-      return true;
-    }
-
-    return false;
+    return new Bird(100, this.canvas.height / 2, image);
   }
 
   /**
    * Method to move the HZ bird and blocks
    */
   private move() {
-    this.bird.yPos += this.bird.ySpeed;
+    this.bird.move();
     this.blocks.forEach((block) => {
-      block.xPos -= block.xSpeed;
+      block.move();
     });
   }
 
@@ -224,7 +155,7 @@ export default class Game {
    */
   private draw() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.drawHZBird();
+    this.bird.draw(this.ctx);
     this.drawBlocks();
 
     // write the current score
@@ -232,15 +163,8 @@ export default class Game {
       `Score is: ${this.score}`,
       40,
       this.canvas.width / 2,
-      40,
+      40
     );
-  }
-
-  /**
-   * Method to draw the HZ bird
-   */
-  private drawHZBird() {
-    this.ctx.drawImage(this.bird.image, this.bird.xPos, this.bird.yPos);
   }
 
   /**
@@ -248,7 +172,7 @@ export default class Game {
    */
   private drawBlocks() {
     this.blocks.forEach((block) => {
-      this.ctx.drawImage(block.image, block.xPos, block.yPos);
+      block.draw(this.ctx)
     });
   }
 
@@ -268,7 +192,7 @@ export default class Game {
     xCoordinate: number,
     yCoordinate: number,
     alignment: CanvasTextAlign = 'center',
-    color: string = 'white',
+    color: string = 'red',
   ): void {
     this.ctx.font = `${fontSize}px sans-serif`;
     this.ctx.fillStyle = color;
