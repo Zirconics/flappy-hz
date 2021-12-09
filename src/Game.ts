@@ -1,9 +1,10 @@
 import Bird from './Bird.js';
 import Block from './Block.js';
+import Obstacle from './Obstacle.js';
 
 export default class Game {
   // Properties for game elements
-  private blocks: Block[];
+  private obstacles: Obstacle[];
 
   private bird: Bird;
 
@@ -28,7 +29,7 @@ export default class Game {
     this.canvas.width = window.innerWidth;
     this.canvas.height = 600;
     this.ctx = this.canvas.getContext('2d');
-    this.blocks = [];
+    this.obstacles = [];
     this.score = 0;
 
     this.bird = this.insertHzBird();
@@ -50,7 +51,7 @@ export default class Game {
     this.move();
     this.draw();
 
-    const collidesWithBlock = this.bird.collidesWithBlocks(this.blocks);
+    const collidesWithBlock = this.bird.collidesWithBlocks(this.obstacles);
     const collidesWithSide = this.bird.collidesWithCanvas(this.canvas);
 
     if (collidesWithBlock || collidesWithSide) {
@@ -79,7 +80,7 @@ export default class Game {
     if (
       this.score === 0 || this.score % Math.round(500 / this.blockSpeed) === 0
     ) {
-      this.blocks.push(this.createBlock());
+      this.obstacles.push(this.createBlock());
     }
   }
 
@@ -88,9 +89,9 @@ export default class Game {
    *
    * @returns The block
    */
-  private createBlock(): Block {
+  private createBlock(): Obstacle {
     const image = Game.loadNewImage('./assets/block.png');
-    return new Block(this.canvas.width, 0, this.blockSpeed, image, this.canvas);
+    return new Block('Block', this.canvas.width, 0, this.blockSpeed, image, this.canvas);
   }
 
   /**
@@ -99,7 +100,7 @@ export default class Game {
   private increaseBlockSpeed() {
     if (this.score % 400 === 0) {
       this.blockSpeed += 2;
-      this.blocks.forEach((block) => {
+      this.obstacles.forEach((block) => {
         block.setXSpeed(this.blockSpeed);
       });
     }
@@ -109,9 +110,9 @@ export default class Game {
    * Method to determine of a block has fully left the window and remove it from the array.
    */
   private blockOutOfCanvas() {
-    this.blocks.forEach((block, index) => {
+    this.obstacles.forEach((block, index) => {
       if (block.getXPosition() + block.getImage().width < 0) {
-        this.blocks.splice(index, 1);
+        this.obstacles.splice(index, 1);
       }
     });
   }
@@ -145,7 +146,7 @@ export default class Game {
    */
   private move() {
     this.bird.move();
-    this.blocks.forEach((block) => {
+    this.obstacles.forEach((block) => {
       block.move();
     });
   }
@@ -171,7 +172,7 @@ export default class Game {
    * Method to draw all the blocks
    */
   private drawBlocks() {
-    this.blocks.forEach((block) => {
+    this.obstacles.forEach((block) => {
       block.draw(this.ctx);
     });
   }

@@ -1,12 +1,11 @@
 import Game from './Game.js';
-import GameItem from './GameItem.js';
+import Obstacle from './Obstacle.js';
 
-export default class Block extends GameItem {
-  private xSpeed: number;
-
+export default class Block extends Obstacle {
   /**
    * Initialise Block
    *
+   * @param type Type of Obstacle
    * @param xPos X Position of block
    * @param yPos Y Position of block
    * @param xSpeed xSpeed of Block
@@ -14,14 +13,14 @@ export default class Block extends GameItem {
    * @param canvas canvas element
    */
   public constructor(
+    type: string,
     xPos: number,
     yPos: number,
     xSpeed: number,
     img: HTMLImageElement,
     canvas: HTMLCanvasElement,
   ) {
-    super(xPos, yPos, img);
-    this.xSpeed = xSpeed;
+    super(type, xSpeed, xPos, yPos, img, canvas);
 
     // check to see if the blocks are on the top or the bottom of the canvas
     const randomNumber = Game.randomNumber(0, 1);
@@ -33,18 +32,9 @@ export default class Block extends GameItem {
   }
 
   /**
-   * Setter for block speed.
-   *
-   * @param xSpeed new value of xSpeed
-   */
-  public setXSpeed(xSpeed: number): void {
-    this.xSpeed = xSpeed;
-  }
-
-  /**
    * Moves the block
    */
   public move(): void {
-    this.xPosition -= this.xSpeed;
+    this.xPosition -= this.getXSpeed();
   }
 }
