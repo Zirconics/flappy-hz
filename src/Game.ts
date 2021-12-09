@@ -100,7 +100,7 @@ export default class Game {
     if (this.score % 400 === 0) {
       this.blockSpeed += 2;
       this.blocks.forEach((block) => {
-        block.setXSpeed(this.blockSpeed)
+        block.setXSpeed(this.blockSpeed);
       });
     }
   }
@@ -163,7 +163,7 @@ export default class Game {
       `Score is: ${this.score}`,
       40,
       this.canvas.width / 2,
-      40
+      40,
     );
   }
 
@@ -172,7 +172,7 @@ export default class Game {
    */
   private drawBlocks() {
     this.blocks.forEach((block) => {
-      block.draw(this.ctx)
+      block.draw(this.ctx);
     });
   }
 
